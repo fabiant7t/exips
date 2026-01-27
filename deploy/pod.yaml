@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: exips-pod
+  namespace: exips
+spec:
+  serviceAccountName: exips-sa
+  containers:
+    - name: kubectl
+      image: syseleven/kubectl-helm:latest
+      command: ["/bin/sh", "-lc"]
+      args:
+        - |
+          echo "Testing permissions..."
+          kubectl get services -A
+          kubectl get nodes
+          echo "Sleeping..."
+          sleep 3600
