@@ -10,23 +10,36 @@ import (
 
 var ErrNoPublicIP = errors.New("error: no public IP")
 
+// INTERFACE
+
 // Node interface
 type Node interface {
 	Name() string
 	IsReady() bool
 	PublicIP() (netip.Addr, error)
-	PublicInternalIP() (netip.Addr, error)
-	PublicExternalIP() (netip.Addr, error)
 }
+
+// CONSTRUCTORS
+
+// New constructs a v1Node instance
+func New(n *corev1.Node) *v1Node {
+	return &v1Node{node: n}
+}
+
+// New constructs a dummyNode instance
+func NewDummyNode(name string, isReady bool, publicIP *netip.Addr) *dummyNode {
+	return &dummyNode{
+		name:     name,
+		isReady:  isReady,
+		publicIP: publicIP,
+	}
+}
+
+// IMPLEMENTATIONS
 
 // v1Node is the anti-corruption layer for corev1 Kubernetes Node objects.
 type v1Node struct {
 	node *corev1.Node
-}
-
-// New v1Node
-func New(n *corev1.Node) *v1Node {
-	return &v1Node{node: n}
 }
 
 // Name of the node
@@ -89,4 +102,26 @@ func (n *v1Node) PublicExternalIP() (netip.Addr, error) {
 		}
 	}
 	return netip.Addr{}, ErrNoPublicIP
+}
+
+// dummyNode satisfies the Node interface and can be used in tests.
+type dummyNode struct {
+	name     string
+	isReady  bool
+	publicIP *netip.Addr
+}
+
+func (n *dummyNode) Name() string {
+	return n.name
+}
+
+func (n *dummyNode) IsReady() bool {
+	return n.isReady
+}
+
+func (n *dummyNode) PublicIP() (netip.Addr, error) {
+	if n.publicIP == nil {
+		return netip.Addr{}, ErrNoPublicIP
+	}
+	return *n.publicIP, nil
 }

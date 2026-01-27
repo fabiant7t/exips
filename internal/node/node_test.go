@@ -1,10 +1,8 @@
-package node_test
+package node
 
 import (
 	"net/netip"
 	"testing"
-
-	"github.com/fabiant7t/exips/internal/node"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,7 +10,7 @@ import (
 
 func TestNodeName(t *testing.T) {
 	name := "cp-1"
-	n := node.New(&corev1.Node{
+	n := New(&corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -25,12 +23,12 @@ func TestNodeName(t *testing.T) {
 func TestNodeIsReady(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		node node.Node
+		node *v1Node
 		want bool
 	}{
 		{
 			name: "kubelet is ready",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Conditions: []corev1.NodeCondition{
 						{
@@ -48,7 +46,7 @@ func TestNodeIsReady(t *testing.T) {
 		},
 		{
 			name: "kubelet is not ready",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Conditions: []corev1.NodeCondition{
 						{
@@ -66,7 +64,7 @@ func TestNodeIsReady(t *testing.T) {
 		},
 		{
 			name: "kubelet stopped posting node status",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Conditions: []corev1.NodeCondition{
 						{
@@ -92,13 +90,13 @@ func TestNodeIsReady(t *testing.T) {
 func TestNodePublicInternalIP(t *testing.T) {
 	for _, tc := range []struct {
 		name             string
-		node             node.Node
+		node             *v1Node
 		want             netip.Addr
 		shouldRaiseError bool
 	}{
 		{
 			name: "private internal IP",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Addresses: []corev1.NodeAddress{
 						{
@@ -112,7 +110,7 @@ func TestNodePublicInternalIP(t *testing.T) {
 		},
 		{
 			name: "public internal IP",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Addresses: []corev1.NodeAddress{
 						{
@@ -138,13 +136,13 @@ func TestNodePublicInternalIP(t *testing.T) {
 func TestNodePublicIP(t *testing.T) {
 	for _, tc := range []struct {
 		name             string
-		node             node.Node
+		node             *v1Node
 		want             netip.Addr
 		shouldRaiseError bool
 	}{
 		{
 			name: "private internal and private external IP",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Addresses: []corev1.NodeAddress{
 						{
@@ -162,7 +160,7 @@ func TestNodePublicIP(t *testing.T) {
 		},
 		{
 			name: "private internal and public external IP",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Addresses: []corev1.NodeAddress{
 						{
@@ -180,7 +178,7 @@ func TestNodePublicIP(t *testing.T) {
 		},
 		{
 			name: "public internal and private external IP",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Addresses: []corev1.NodeAddress{
 						{
@@ -198,7 +196,7 @@ func TestNodePublicIP(t *testing.T) {
 		},
 		{
 			name: "public internal and public external IP",
-			node: node.New(&corev1.Node{
+			node: New(&corev1.Node{
 				Status: corev1.NodeStatus{
 					Addresses: []corev1.NodeAddress{
 						{
@@ -221,6 +219,43 @@ func TestNodePublicIP(t *testing.T) {
 		}
 		if got, want := publicIP, tc.want; got != want {
 			t.Errorf("%s: Got %v, want %v", tc.name, got, want)
+		}
+	}
+}
+
+func TestImplementsNode(t *testing.T) {
+	var _ Node = &v1Node{}
+}
+
+func TestDummyNodeImplementsNode(t *testing.T) {
+	var _ Node = &dummyNode{}
+}
+
+func TestDummyNode(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		isReady          bool
+		publicIP         *netip.Addr
+		shouldRaiseError bool
+	}{
+		{name: "cp-1", isReady: true, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.4"))},
+		{name: "cp-2", isReady: false, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.4"))},
+		{name: "cp-3", isReady: true, shouldRaiseError: true},
+	} {
+		n := NewDummyNode(tc.name, tc.isReady, tc.publicIP)
+		if got, want := n.Name(), tc.name; got != want {
+			t.Errorf("got %s, want %s", got, want)
+		}
+		if got, want := n.IsReady(), tc.isReady; got != want {
+			t.Errorf("got %t, want %t", got, want)
+		}
+		publicIP, err := n.PublicIP()
+		if err != nil && !tc.shouldRaiseError {
+			t.Error(err)
+		} else if err == nil {
+			if got, want := publicIP.String(), tc.publicIP.String(); got != want {
+				t.Errorf("got %s, want %s", got, want)
+			}
 		}
 	}
 }
