@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -40,19 +40,33 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Go(func() {
-		if err := reg.SyncForever(ctx, client, cfg.Resync); err != nil {
+		if err := reg.Run(ctx, client, cfg.Resync); err != nil {
 			slog.Error("error syncing registry", "err", err)
 			return
 		}
 	})
 
+	ticker := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
-			for i, n := range reg.List() {
-				fmt.Println(i, n.Name())
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				nodes := reg.List()
+				ips := make([]string, 0, len(nodes))
+				for _, n := range nodes {
+					if !n.IsReady() {
+						continue
+					}
+					pubIP, err := n.PublicIP()
+					if err == nil {
+						ips = append(ips, pubIP.String())
+					}
+
+				}
+				log.Println(ips)
 			}
-			fmt.Println()
-			time.Sleep(5 * time.Second)
 		}
 	}()
 
