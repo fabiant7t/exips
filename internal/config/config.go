@@ -3,6 +3,7 @@ package config
 import (
 	"log/slog"
 	"os"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -18,6 +19,7 @@ type config struct {
 	ServiceName string
 	Namespace   string
 	KubeConfig  string
+	Resync      time.Duration
 }
 
 func (cfg *config) Client() (kubernetes.Interface, error) {
@@ -40,10 +42,11 @@ func (cfg *config) Client() (kubernetes.Interface, error) {
 	return kubernetes.NewForConfig(restConfig)
 }
 
-func New() *config {
+func New() (*config, error) {
 	cfg := &config{
 		ServiceName: DefaultServiceName,
 		Namespace:   DefaultNamespace,
+		Resync:      15 * time.Second,
 	}
 	if v := os.Getenv("SERVICENAME"); v != "" {
 		cfg.ServiceName = v
@@ -54,5 +57,12 @@ func New() *config {
 	if v := os.Getenv("KUBECONFIG"); v != "" {
 		cfg.KubeConfig = v
 	}
-	return cfg
+	if v := os.Getenv("RESYNC"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Resync = d
+	}
+	return cfg, nil
 }

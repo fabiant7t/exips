@@ -15,11 +15,16 @@ import (
 )
 
 func main() {
-	cfg := config.New()
+	cfg, err := config.New()
+	if err != nil {
+		slog.Error("error in configuration", "err", err)
+		os.Exit(1)
+	}
 	slog.Info("Configuration",
 		"service_name", cfg.ServiceName,
 		"namespace", cfg.Namespace,
 		"kube_config", cfg.KubeConfig,
+		"resync", cfg.Resync,
 	)
 
 	client, err := cfg.Client()
@@ -35,7 +40,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Go(func() {
-		if err := reg.SyncForever(ctx, client, 15*time.Second); err != nil {
+		if err := reg.SyncForever(ctx, client, cfg.Resync); err != nil {
 			slog.Error("error syncing registry", "err", err)
 			return
 		}
