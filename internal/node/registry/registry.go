@@ -63,19 +63,15 @@ func (r *Registry) Get(name string) (node.Node, bool) {
 func (r *Registry) List() []node.Node {
 	r.mu.RLock()
 
-	keys := make([]string, 0, len(r.repo))
-	for k := range r.repo {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
 	nodes := make([]node.Node, 0, len(r.repo))
-	for _, k := range keys {
-		nodes = append(nodes, r.repo[k])
+	for _, n := range r.repo {
+		nodes = append(nodes, n)
 	}
-
 	r.mu.RUnlock()
 
+	sort.Slice(nodes, func(i, j int) bool {
+		return nodes[i].Name() < nodes[j].Name()
+	})
 	return nodes
 }
 
