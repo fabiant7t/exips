@@ -46,7 +46,7 @@ func (r *registry) update(_ node.Node, new node.Node) {
 	r.repo[new.Name()] = new
 }
 
-func (r *registry) get(name string) (node.Node, bool) {
+func (r *registry) Get(name string) (node.Node, bool) {
 	r.RLock()
 	defer r.RUnlock()
 	n, ok := r.repo[name]

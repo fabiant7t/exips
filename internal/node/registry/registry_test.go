@@ -34,7 +34,7 @@ func TestDelete(t *testing.T) {
 
 func TestGetMissing(t *testing.T) {
 	reg := New()
-	_, ok := reg.get("missing")
+	_, ok := reg.Get("missing")
 	if got, want := ok, false; got != want {
 		t.Errorf("Got %t, want %t", got, want)
 	}
@@ -43,7 +43,7 @@ func TestGetMissing(t *testing.T) {
 func TestGet(t *testing.T) {
 	reg := New()
 	reg.add(node.NewDummyNode("cp-1", true, nil))
-	n, ok := reg.get("cp-1")
+	n, ok := reg.Get("cp-1")
 	if got, want := ok, true; got != want {
 		t.Errorf("Got %t, want %t", got, want)
 	}
@@ -58,7 +58,7 @@ func TestUpdate(t *testing.T) {
 	reg.add(node.NewDummyNode("cp-1", true, nil))
 	nNotReady := node.NewDummyNode("cp-1", false, nil)
 	reg.update(n, nNotReady)
-	nFromReg, ok := reg.get("cp-1")
+	nFromReg, ok := reg.Get("cp-1")
 	if got, want := ok, true; got != want {
 		t.Errorf("Got %t, want %t", got, want)
 	}
