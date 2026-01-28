@@ -46,7 +46,7 @@ func New() (*config, error) {
 	cfg := &config{
 		ServiceName: DefaultServiceName,
 		Namespace:   DefaultNamespace,
-		Resync:      15 * time.Second,
+		Resync:      1 * time.Minute,
 	}
 	if v := os.Getenv("SERVICENAME"); v != "" {
 		cfg.ServiceName = v
