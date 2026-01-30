@@ -3,6 +3,7 @@ package config
 import (
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -19,7 +20,9 @@ type config struct {
 	ServiceName string
 	Namespace   string
 	KubeConfig  string
+	Interval    time.Duration
 	Resync      time.Duration
+	Debug       bool
 }
 
 func (cfg *config) Client() (kubernetes.Interface, error) {
@@ -46,7 +49,9 @@ func New() (*config, error) {
 	cfg := &config{
 		ServiceName: DefaultServiceName,
 		Namespace:   DefaultNamespace,
+		Interval:    15 * time.Second,
 		Resync:      1 * time.Minute,
+		Debug:       false,
 	}
 	if v := os.Getenv("SERVICENAME"); v != "" {
 		cfg.ServiceName = v
@@ -57,12 +62,26 @@ func New() (*config, error) {
 	if v := os.Getenv("KUBECONFIG"); v != "" {
 		cfg.KubeConfig = v
 	}
+	if v := os.Getenv("INTERVAL"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Interval = d
+	}
 	if v := os.Getenv("RESYNC"); v != "" {
 		d, err := time.ParseDuration(v)
 		if err != nil {
 			return nil, err
 		}
 		cfg.Resync = d
+	}
+	if v := os.Getenv("DEBUG"); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Debug = b
 	}
 	return cfg, nil
 }

@@ -58,7 +58,7 @@ func Apply(ctx context.Context, client kubernetes.Interface, svc *corev1.Service
 		types.ApplyPatchType,
 		data,
 		metav1.PatchOptions{
-			FieldManager: "mnml-ingress-endpoints-service",
+			FieldManager: "exips-service",
 			Force:        &yes,
 		},
 	)
