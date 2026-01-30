@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exips
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exips
+  template:
+    metadata:
+      labels:
+        app: exips
+    spec:
+      serviceAccountName: exips-sa
+      containers:
+        - name: exips
+          image: fabiant7t/exips:latest
+          envFrom:
+            - configMapRef:
+                name: exips-config

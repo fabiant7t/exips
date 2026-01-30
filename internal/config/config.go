@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	DefaultServiceName = "exips"
-	DefaultNamespace   = "exips"
+	DefaultServiceName      = "exips"
+	DefaultServiceNamespace = "exips"
 )
 
 type config struct {
-	ServiceName string
-	Namespace   string
-	KubeConfig  string
-	Interval    time.Duration
-	Resync      time.Duration
-	Debug       bool
+	ServiceName      string
+	ServiceNamespace string
+	KubeConfig       string
+	Interval         time.Duration
+	Resync           time.Duration
+	Debug            bool
 }
 
 func (cfg *config) Client() (kubernetes.Interface, error) {
@@ -47,17 +47,17 @@ func (cfg *config) Client() (kubernetes.Interface, error) {
 
 func New() (*config, error) {
 	cfg := &config{
-		ServiceName: DefaultServiceName,
-		Namespace:   DefaultNamespace,
-		Interval:    15 * time.Second,
-		Resync:      1 * time.Minute,
-		Debug:       false,
+		ServiceName:      DefaultServiceName,
+		ServiceNamespace: DefaultServiceNamespace,
+		Interval:         15 * time.Second,
+		Resync:           1 * time.Minute,
+		Debug:            false,
 	}
-	if v := os.Getenv("SERVICENAME"); v != "" {
+	if v := os.Getenv("SERVICE_NAME"); v != "" {
 		cfg.ServiceName = v
 	}
-	if v := os.Getenv("NAMESPACE"); v != "" {
-		cfg.Namespace = v
+	if v := os.Getenv("SERVICE_NAMESPACE"); v != "" {
+		cfg.ServiceNamespace = v
 	}
 	if v := os.Getenv("KUBECONFIG"); v != "" {
 		cfg.KubeConfig = v

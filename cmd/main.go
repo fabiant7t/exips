@@ -40,7 +40,7 @@ func main() {
 	)
 	slog.Info("Configuration",
 		"service_name", cfg.ServiceName,
-		"namespace", cfg.Namespace,
+		"service_namespace", cfg.ServiceNamespace,
 		"kube_config", cfg.KubeConfig,
 		"interval", cfg.Interval,
 		"resync", cfg.Resync,
@@ -79,27 +79,27 @@ func main() {
 					externalIPStrings[i] = ip.String()
 				}
 
-				existingSvc, err := service.Get(ctx, client, cfg.ServiceName, cfg.Namespace)
+				existingSvc, err := service.Get(ctx, client, cfg.ServiceName, cfg.ServiceNamespace)
 				if err != nil {
-					slog.Error("error getting service", "err", err, "name", cfg.ServiceName, "namespace", cfg.Namespace)
+					slog.Error("error getting service", "err", err, "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace)
 					return
 				}
 				if existingSvc == nil { // create service
 					svc := service.New(cfg.ServiceName, externalIPStrings)
-					if err := service.Apply(ctx, client, svc, cfg.Namespace); err == nil {
-						slog.Info("Service created", "name", cfg.ServiceName, "namespace", cfg.Namespace, "external_ips", svc.Spec.ExternalIPs)
+					if err := service.Apply(ctx, client, svc, cfg.ServiceNamespace); err == nil {
+						slog.Info("Service created", "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace, "external_ips", svc.Spec.ExternalIPs)
 					} else {
-						slog.Error("error creating service", "err", err, "name", cfg.ServiceName, "namespace", cfg.Namespace)
+						slog.Error("error creating service", "err", err, "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace)
 					}
 				} else { // service exists, may require update
 					if upToDate := slices.Equal(existingSvc.Spec.ExternalIPs, externalIPStrings); upToDate {
-						slog.Debug("Service is already up to date", "name", cfg.ServiceName, "namespace", cfg.Namespace, "external_ips", existingSvc.Spec.ExternalIPs)
+						slog.Debug("Service is already up to date", "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace, "external_ips", existingSvc.Spec.ExternalIPs)
 					} else { // must update
 						svc := service.New(cfg.ServiceName, externalIPStrings)
-						if err := service.Apply(ctx, client, svc, cfg.Namespace); err == nil {
-							slog.Info("Service updated", "name", cfg.ServiceName, "namespace", cfg.Namespace, "external_ips", svc.Spec.ExternalIPs)
+						if err := service.Apply(ctx, client, svc, cfg.ServiceNamespace); err == nil {
+							slog.Info("Service updated", "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace, "external_ips", svc.Spec.ExternalIPs)
 						} else {
-							slog.Error("error updating service", "err", err, "name", cfg.ServiceName, "namespace", cfg.Namespace)
+							slog.Error("error updating service", "err", err, "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace)
 						}
 					}
 				}
