@@ -16,6 +16,7 @@ var ErrNoPublicIP = errors.New("error: no public IP")
 type Node interface {
 	Name() string
 	IsReady() bool
+	IsSchedulingOnControlPlaneAllowed() bool
 	PublicIP() (netip.Addr, error)
 }
 
@@ -27,11 +28,12 @@ func New(n *corev1.Node) *v1Node {
 }
 
 // New constructs a dummyNode instance
-func NewDummyNode(name string, isReady bool, publicIP *netip.Addr) *dummyNode {
+func NewDummyNode(name string, isReady, isSchedulingOnControlPlaneAllowed bool, publicIP *netip.Addr) *dummyNode {
 	return &dummyNode{
-		name:     name,
-		isReady:  isReady,
-		publicIP: publicIP,
+		name:                              name,
+		isReady:                           isReady,
+		isSchedulingOnControlPlaneAllowed: isSchedulingOnControlPlaneAllowed,
+		publicIP:                          publicIP,
 	}
 }
 
@@ -55,6 +57,17 @@ func (n *v1Node) IsReady() bool {
 		}
 	}
 	return false
+}
+
+// IsSchedulingOnControlPlaneAllowed returns true if there is no taint to prevent
+// scheduling on control plane. Worker nodes return true.
+func (n *v1Node) IsSchedulingOnControlPlaneAllowed() bool {
+	for _, taint := range n.node.Spec.Taints {
+		if taint.Effect == corev1.TaintEffectNoSchedule {
+			return false
+		}
+	}
+	return true
 }
 
 // PublicIP returns the first non private external or internal IP
@@ -106,9 +119,10 @@ func (n *v1Node) PublicExternalIP() (netip.Addr, error) {
 
 // dummyNode satisfies the Node interface and can be used in tests.
 type dummyNode struct {
-	name     string
-	isReady  bool
-	publicIP *netip.Addr
+	name                              string
+	isReady                           bool
+	isSchedulingOnControlPlaneAllowed bool
+	publicIP                          *netip.Addr
 }
 
 func (n *dummyNode) Name() string {
@@ -117,6 +131,10 @@ func (n *dummyNode) Name() string {
 
 func (n *dummyNode) IsReady() bool {
 	return n.isReady
+}
+
+func (n *dummyNode) IsSchedulingOnControlPlaneAllowed() bool {
+	return n.isSchedulingOnControlPlaneAllowed
 }
 
 func (n *dummyNode) PublicIP() (netip.Addr, error) {

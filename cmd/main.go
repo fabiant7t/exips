@@ -53,19 +53,8 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				nodes := reg.List()
-				ips := make([]string, 0, len(nodes))
-				for _, n := range nodes {
-					if !n.IsReady() {
-						continue
-					}
-					pubIP, err := n.PublicIP()
-					if err == nil {
-						ips = append(ips, pubIP.String())
-					}
-
-				}
-				log.Println(ips)
+				externalIPs := reg.ParseExternalIPs()
+				log.Println(externalIPs)
 			}
 		}
 	}()
