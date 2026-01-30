@@ -1,0 +1,4 @@
+FROM gcr.io/distroless/static-debian12
+COPY exips /exips
+USER nonroot:nonroot
+ENTRYPOINT ["/exips"]

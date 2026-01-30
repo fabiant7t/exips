@@ -1,0 +1,59 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: exips
+    main: ./cmd
+    binary: exips
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.Version={{ .Tag }}
+      - -X main.Commit={{ .Commit }}
+      - -X main.BuiltTime={{ .Date }}
+
+dockers:
+  - id: app-docker
+    image_templates:
+      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-amd64"
+    dockerfile: Dockerfile.goreleaser
+    use: docker
+    build_flag_templates:
+      - "--platform=linux/amd64"
+    extra_files:
+      - LICENSE
+    ids:
+      - exips
+
+  - id: app-docker-arm64
+    image_templates:
+      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile.goreleaser
+    use: docker
+    build_flag_templates:
+      - "--platform=linux/arm64"
+    extra_files:
+      - LICENSE
+    ids:
+      - exips
+
+docker_manifests:
+  - name_template: "dockerhub.com/fabiant7t/exips:{{ .Tag }}"
+    image_templates:
+      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-amd64"
+      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-arm64"
+
+  - name_template: "dockerhub.com/fabiant7t/exips:latest"
+    image_templates:
+      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-amd64"
+      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-arm64"
