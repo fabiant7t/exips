@@ -22,38 +22,18 @@ builds:
       - -X main.Commit={{ .Commit }}
       - -X main.BuiltTime={{ .Date }}
 
-dockers:
+dockers_v2:
   - id: app-docker
-    image_templates:
-      - "docker.io/fabiant7t/exips:{{ .Tag }}-amd64"
     dockerfile: Dockerfile.goreleaser
-    use: docker
-    build_flag_templates:
-      - "--platform=linux/amd64"
-    extra_files:
-      - LICENSE
     ids:
       - exips
-
-  - id: app-docker-arm64
-    image_templates:
-      - "docker.io/fabiant7t/exips:{{ .Tag }}-arm64"
-    dockerfile: Dockerfile.goreleaser
-    use: docker
-    build_flag_templates:
-      - "--platform=linux/arm64"
+    images:
+      - "docker.io/fabiant7t/exips"
+    tags:
+      - "{{ .Tag }}"
+      - "latest"
+    platforms:
+      - linux/amd64
+      - linux/arm64
     extra_files:
       - LICENSE
-    ids:
-      - exips
-
-docker_manifests:
-  - name_template: "docker.io/fabiant7t/exips:{{ .Tag }}"
-    image_templates:
-      - "docker.io/fabiant7t/exips:{{ .Tag }}-amd64"
-      - "docker.io/fabiant7t/exips:{{ .Tag }}-arm64"
-
-  - name_template: "docker.io/fabiant7t/exips:latest"
-    image_templates:
-      - "docker.io/fabiant7t/exips:{{ .Tag }}-amd64"
-      - "docker.io/fabiant7t/exips:{{ .Tag }}-arm64"
