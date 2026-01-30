@@ -16,8 +16,7 @@ resources:
 configMapGenerator:
   - name: exips-config
     literals:
-      #- DEBUG="false"
-      - DEBUG="true"
+      - DEBUG="false"
       - INTERVAL=15s
       - RESYNC=1m
       - SERVICE_NAME=exips
