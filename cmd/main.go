@@ -15,12 +15,29 @@ import (
 	"github.com/fabiant7t/exips/internal/service"
 )
 
+var (
+	Version   = "dev"
+	Commit    = "none"
+	BuiltTime = "unknown"
+)
+
 func main() {
 	cfg, err := config.New()
 	if err != nil {
 		slog.Error("error in configuration", "err", err)
 		os.Exit(1)
 	}
+	if cfg.Debug {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
+	slog.Info("exips",
+		"version", Version,
+		"author", "Fabian Topfstedt",
+		"url", "https://github.com/fabiant7t/exips",
+		"licence", "MIT",
+		"commit", Commit,
+		"built_time", BuiltTime,
+	)
 	slog.Info("Configuration",
 		"service_name", cfg.ServiceName,
 		"namespace", cfg.Namespace,
@@ -29,9 +46,6 @@ func main() {
 		"resync", cfg.Resync,
 		"debug", cfg.Debug,
 	)
-	if cfg.Debug {
-		slog.SetLogLoggerLevel(slog.LevelDebug)
-	}
 
 	client, err := cfg.Client()
 	if err != nil {
