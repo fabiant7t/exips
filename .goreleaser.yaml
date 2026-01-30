@@ -25,7 +25,7 @@ builds:
 dockers:
   - id: app-docker
     image_templates:
-      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-amd64"
+      - "docker.io/fabiant7t/exips:{{ .Tag }}-amd64"
     dockerfile: Dockerfile.goreleaser
     use: docker
     build_flag_templates:
@@ -37,7 +37,7 @@ dockers:
 
   - id: app-docker-arm64
     image_templates:
-      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-arm64"
+      - "docker.io/fabiant7t/exips:{{ .Tag }}-arm64"
     dockerfile: Dockerfile.goreleaser
     use: docker
     build_flag_templates:
@@ -48,12 +48,12 @@ dockers:
       - exips
 
 docker_manifests:
-  - name_template: "dockerhub.com/fabiant7t/exips:{{ .Tag }}"
+  - name_template: "docker.io/fabiant7t/exips:{{ .Tag }}"
     image_templates:
-      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-amd64"
-      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-arm64"
+      - "docker.io/fabiant7t/exips:{{ .Tag }}-amd64"
+      - "docker.io/fabiant7t/exips:{{ .Tag }}-arm64"
 
-  - name_template: "dockerhub.com/fabiant7t/exips:latest"
+  - name_template: "docker.io/fabiant7t/exips:latest"
     image_templates:
-      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-amd64"
-      - "dockerhub.com/fabiant7t/exips:{{ .Tag }}-arm64"
+      - "docker.io/fabiant7t/exips:{{ .Tag }}-amd64"
+      - "docker.io/fabiant7t/exips:{{ .Tag }}-arm64"
