@@ -7,4 +7,4 @@ test:
 release:
 	rm -rf dist/
 	goreleaser release
-	git checkout -- deploy/deployment.yaml # tags gets changed while releasing
+	mv deploy/deployment.yaml.bak deploy/deployment.yaml
