@@ -15,7 +15,7 @@ spec:
       serviceAccountName: exips-sa
       containers:
         - name: exips
-          image: fabiant7t/exips:latest
+          image: fabiant7t/exips:{{ .Tag }}
           envFrom:
             - configMapRef:
                 name: exips-config

@@ -8,6 +8,8 @@ Only IPs of schedulable nodes in ready state are exposed; control-plane IPs are 
 The `deploy` directory contains Kubernetes Objects and a [Kustomize](https://kustomize.io/) configuration.
 It can be deployed using the [Flux CD `GitRepository`API](https://fluxcd.io/flux/components/kustomize/kustomizations/).
 
+Containers for linux/amd64 and linux/arm64 are available on Docker Hub: [fabiant7t/exips](https://hub.docker.com/r/fabiant7t/exips).
+
 ## Traefik Ingress
 If you use Traefik for HTTP(S) routing and run `exips` with the default configuration, enable `publishedService` and set it to `exips/exips`:
 
