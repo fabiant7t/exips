@@ -65,9 +65,8 @@ func main() {
 			return
 		}
 	})
-
-	ticker := time.NewTicker(cfg.Interval)
-	go func() {
+	wg.Go(func() {
+		ticker := time.NewTicker(cfg.Interval)
 		for {
 			select {
 			case <-ctx.Done():
@@ -105,7 +104,7 @@ func main() {
 				}
 			}
 		}
-	}()
+	})
 
 	wg.Wait()
 }

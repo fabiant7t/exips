@@ -4,8 +4,9 @@ import (
 	"net/netip"
 )
 
-// ParseExternalIPs returns the public IPs of all ready
-// worker nodes and schedulable control planes.
+// ParseExternalIPs returns the public IPs of all Ready nodes,
+// excluding control-plane nodes tainted with
+// node-role.kubernetes.io/control-plane:NoSchedule.
 func (r *Registry) ParseExternalIPs() []netip.Addr {
 	nodes := r.List() // already ordered
 	ips := make([]netip.Addr, 0, len(nodes))
@@ -13,7 +14,7 @@ func (r *Registry) ParseExternalIPs() []netip.Addr {
 		if !n.IsReady() {
 			continue
 		}
-		if !n.IsSchedulingOnControlPlaneAllowed() {
+		if !n.IsControlPlaneSchedulable() {
 			continue
 		}
 		pubIP, err := n.PublicIP()
