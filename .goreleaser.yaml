@@ -4,7 +4,6 @@ before:
   hooks:
     - go mod tidy
     - go test ./...
-    - sed -i.bak "s/exips:latest/exips:{{ .Tag }}/g" deploy/deployment.yaml
 
 builds:
   - id: exips
