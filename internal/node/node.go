@@ -16,6 +16,7 @@ var ErrNoPublicIP = errors.New("error: no public IP")
 type Node interface {
 	Name() string
 	IsReady() bool
+	IsSchedulable() bool
 	IsControlPlaneSchedulable() bool
 	PublicIP() (netip.Addr, error)
 }
@@ -27,11 +28,12 @@ func New(n *corev1.Node) *v1Node {
 	return &v1Node{node: n}
 }
 
-// New constructs a dummyNode instance
-func NewDummyNode(name string, isReady, isControlPlaneSchedulable bool, publicIP *netip.Addr) *dummyNode {
+// NewDummyNode constructs a dummyNode instance
+func NewDummyNode(name string, isReady, isSchedulable, isControlPlaneSchedulable bool, publicIP *netip.Addr) *dummyNode {
 	return &dummyNode{
 		name:                      name,
 		isReady:                   isReady,
+		isSchedulable:             isSchedulable,
 		isControlPlaneSchedulable: isControlPlaneSchedulable,
 		publicIP:                  publicIP,
 	}
@@ -57,6 +59,16 @@ func (n *v1Node) IsReady() bool {
 		}
 	}
 	return false
+}
+
+// IsSchedulable returns true if there is no current unschedulable node taint.
+func (n *v1Node) IsSchedulable() bool {
+	for _, taint := range n.node.Spec.Taints {
+		if taint.Key == "node.kubernetes.io/unschedulable" && taint.Effect == corev1.TaintEffectNoSchedule {
+			return false
+		}
+	}
+	return true
 }
 
 // IsControlPlaneSchedulable returns true if there is no taint to prevent
@@ -121,6 +133,7 @@ func (n *v1Node) PublicExternalIP() (netip.Addr, error) {
 type dummyNode struct {
 	name                      string
 	isReady                   bool
+	isSchedulable             bool
 	isControlPlaneSchedulable bool
 	publicIP                  *netip.Addr
 }
@@ -131,6 +144,10 @@ func (n *dummyNode) Name() string {
 
 func (n *dummyNode) IsReady() bool {
 	return n.isReady
+}
+
+func (n *dummyNode) IsSchedulable() bool {
+	return n.isSchedulable
 }
 
 func (n *dummyNode) IsControlPlaneSchedulable() bool {

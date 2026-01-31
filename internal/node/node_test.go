@@ -235,16 +235,18 @@ func TestDummyNode(t *testing.T) {
 	for _, tc := range []struct {
 		name                      string
 		isReady                   bool
+		isSchedulable             bool
 		isControlPlaneSchedulable bool
 		publicIP                  *netip.Addr
 		shouldRaiseError          bool
 	}{
-		{name: "cp-1", isReady: true, isControlPlaneSchedulable: true, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.1"))},
-		{name: "cp-2", isReady: false, isControlPlaneSchedulable: true, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.2"))},
-		{name: "cp-3", isReady: true, isControlPlaneSchedulable: true, shouldRaiseError: true},
-		{name: "cp-4", isReady: true, isControlPlaneSchedulable: false, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.4"))},
+		{name: "cp-1", isReady: true, isSchedulable: true, isControlPlaneSchedulable: true, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.1"))},
+		{name: "cp-2", isReady: false, isSchedulable: true, isControlPlaneSchedulable: true, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.2"))},
+		{name: "cp-3", isReady: true, isSchedulable: true, isControlPlaneSchedulable: true, shouldRaiseError: true},
+		{name: "cp-4", isReady: true, isSchedulable: true, isControlPlaneSchedulable: false, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("1.2.3.4"))},
+		{name: "cp-5", isReady: true, isSchedulable: false, isControlPlaneSchedulable: true, publicIP: func(a netip.Addr) *netip.Addr { return &a }(netip.MustParseAddr("2.3.4.5"))},
 	} {
-		n := NewDummyNode(tc.name, tc.isReady, tc.isControlPlaneSchedulable, tc.publicIP)
+		n := NewDummyNode(tc.name, tc.isReady, tc.isSchedulable, tc.isControlPlaneSchedulable, tc.publicIP)
 		if got, want := n.Name(), tc.name; got != want {
 			t.Errorf("got %s, want %s", got, want)
 		}
@@ -261,6 +263,42 @@ func TestDummyNode(t *testing.T) {
 			if got, want := publicIP.String(), tc.publicIP.String(); got != want {
 				t.Errorf("got %s, want %s", got, want)
 			}
+		}
+	}
+}
+
+func TestNodeIsSchedulable(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		node *v1Node
+		want bool
+	}{
+		{
+			name: "node is unschedulable",
+			node: New(&corev1.Node{
+				Spec: corev1.NodeSpec{
+					Taints: []corev1.Taint{
+						{
+							Key:    "node.kubernetes.io/unschedulable",
+							Effect: corev1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}),
+			want: false,
+		},
+		{
+			name: "node is schedulable",
+			node: New(&corev1.Node{
+				Spec: corev1.NodeSpec{
+					Taints: []corev1.Taint{},
+				},
+			}),
+			want: true,
+		},
+	} {
+		if got, want := tc.node.IsSchedulable(), tc.want; got != want {
+			t.Errorf("%s: Got %t, want %t", tc.name, got, want)
 		}
 	}
 }
