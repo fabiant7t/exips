@@ -15,7 +15,7 @@ spec:
       serviceAccountName: exips-sa
       containers:
         - name: exips
-          image: fabiant7t/exips:v0.0.14
+          image: fabiant7t/exips:v0.0.15
           envFrom:
             - configMapRef:
                 name: exips-config
