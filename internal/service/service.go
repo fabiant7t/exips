@@ -29,14 +29,9 @@ func New(name string, externalIPs []string) *corev1.Service {
 			Type: corev1.ServiceTypeClusterIP,
 			Ports: []corev1.ServicePort{
 				{
-					Name:       "http",
-					Port:       80,
-					TargetPort: intstr.FromInt(80),
-				},
-				{
-					Name:       "https",
-					Port:       443,
-					TargetPort: intstr.FromInt(443),
+					Name:       "dummy",
+					Port:       6942,
+					TargetPort: intstr.FromInt(6942),
 				},
 			},
 			ExternalIPs: externalIPs,
