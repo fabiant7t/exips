@@ -21,5 +21,6 @@ release: show_latest_tag
 	rm -f deploy/deployment.yaml.bak; \
 	git add deploy/deployment.yaml; \
 	git commit -m "deployment uses tag $$TAG"; \
+	git push; \
 	git tag $$TAG; \
 	goreleaser release;
