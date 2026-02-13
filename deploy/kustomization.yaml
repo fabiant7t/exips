@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: exips
 
 resources:
-  - namespace.yaml
   - serviceaccount.yaml
   - clusterrole.yaml
   - clusterrolebinding.yaml
