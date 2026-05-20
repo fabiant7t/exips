@@ -30,7 +30,8 @@ func main() {
 	if cfg.Debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
-	slog.Info("exips",
+	slog.Info(
+		"exips",
 		"version", Version,
 		"author", "Fabian Topfstedt",
 		"url", "https://github.com/fabiant7t/exips",
@@ -38,7 +39,8 @@ func main() {
 		"commit", Commit,
 		"built_time", BuiltTime,
 	)
-	slog.Info("Configuration",
+	slog.Info(
+		"Configuration",
 		"service_name", cfg.ServiceName,
 		"service_namespace", cfg.ServiceNamespace,
 		"kube_config", cfg.KubeConfig,
