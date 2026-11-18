@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/netip"
 	"os"
 	"os/signal"
 	"slices"
@@ -13,6 +14,7 @@ import (
 	"github.com/fabiant7t/exips/internal/config"
 	"github.com/fabiant7t/exips/internal/node/registry"
 	"github.com/fabiant7t/exips/internal/service"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -69,44 +71,52 @@ func main() {
 	})
 	wg.Go(func() {
 		ticker := time.NewTicker(cfg.Interval)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				externalIPs := reg.ParseExternalIPs()
-				externalIPStrings := make([]string, len(externalIPs))
-				for i, ip := range externalIPs {
-					externalIPStrings[i] = ip.String()
-				}
+		defer ticker.Stop()
+		runServiceLoop(ctx, client, cfg.ServiceName, cfg.ServiceNamespace, reg.ParseExternalIPs, ticker.C)
+	})
 
-				existingSvc, err := service.Get(ctx, client, cfg.ServiceName, cfg.ServiceNamespace)
-				if err != nil {
-					slog.Error("error getting service", "err", err, "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace)
-					return
+	wg.Wait()
+}
+
+func runServiceLoop(ctx context.Context, client kubernetes.Interface, name, namespace string, eligibleIPs func() []netip.Addr, ticks <-chan time.Time) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case _, ok := <-ticks:
+			if !ok {
+				return
+			}
+			externalIPs := eligibleIPs()
+			externalIPStrings := make([]string, len(externalIPs))
+			for i, ip := range externalIPs {
+				externalIPStrings[i] = ip.String()
+			}
+
+			existingSvc, err := service.Get(ctx, client, name, namespace)
+			if err != nil {
+				slog.Error("error getting service", "err", err, "name", name, "namespace", namespace)
+				continue
+			}
+			if existingSvc == nil { // create service
+				svc := service.New(name, externalIPStrings)
+				if err := service.Apply(ctx, client, svc, namespace); err == nil {
+					slog.Info("Service created", "name", name, "namespace", namespace, "external_ips", svc.Spec.ExternalIPs)
+				} else {
+					slog.Error("error creating service", "err", err, "name", name, "namespace", namespace)
 				}
-				if existingSvc == nil { // create service
-					svc := service.New(cfg.ServiceName, externalIPStrings)
-					if err := service.Apply(ctx, client, svc, cfg.ServiceNamespace); err == nil {
-						slog.Info("Service created", "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace, "external_ips", svc.Spec.ExternalIPs)
+			} else { // service exists, may require update
+				if upToDate := slices.Equal(existingSvc.Spec.ExternalIPs, externalIPStrings); upToDate {
+					slog.Debug("Service is already up to date", "name", name, "namespace", namespace, "external_ips", existingSvc.Spec.ExternalIPs)
+				} else { // must update
+					svc := service.New(name, externalIPStrings)
+					if err := service.Apply(ctx, client, svc, namespace); err == nil {
+						slog.Info("Service updated", "name", name, "namespace", namespace, "external_ips", svc.Spec.ExternalIPs)
 					} else {
-						slog.Error("error creating service", "err", err, "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace)
-					}
-				} else { // service exists, may require update
-					if upToDate := slices.Equal(existingSvc.Spec.ExternalIPs, externalIPStrings); upToDate {
-						slog.Debug("Service is already up to date", "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace, "external_ips", existingSvc.Spec.ExternalIPs)
-					} else { // must update
-						svc := service.New(cfg.ServiceName, externalIPStrings)
-						if err := service.Apply(ctx, client, svc, cfg.ServiceNamespace); err == nil {
-							slog.Info("Service updated", "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace, "external_ips", svc.Spec.ExternalIPs)
-						} else {
-							slog.Error("error updating service", "err", err, "name", cfg.ServiceName, "namespace", cfg.ServiceNamespace)
-						}
+						slog.Error("error updating service", "err", err, "name", name, "namespace", namespace)
 					}
 				}
 			}
 		}
-	})
-
-	wg.Wait()
+	}
 }
